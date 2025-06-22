@@ -16,13 +16,10 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt update
         sudo apt install -y git-core gnupg flex bison build-essential \
-          zip curl zlib1g-dev:i386 libc6-dev:i386 libncurses5:i386 \
-          libstdc++6:i386 lib32z1-dev libbz2-1.0:i386 libssl-dev \
-          liblz4-tool libxml2-utils rsync ca-certificates \
-          python3 python-is-python3 openjdk-17-jdk bc \
-          libncurses5-dev:i386 libncurses-dev:i386 \
-          lib32ncurses6 lib32z1 libgl1-mesa-dev unzip \
-          squashfs-tools xsltproc zip zstd
+          zip curl zlib1g-dev libc6-dev libstdc++6 \
+          lib32z1-dev liblz4-tool libxml2-utils rsync \
+          python3 python-is-python3 openjdk-17-jdk \
+          unzip squashfs-tools xsltproc zstd
 
     - name: Instalar repo tool
       run: |
