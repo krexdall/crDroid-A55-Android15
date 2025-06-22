@@ -26,8 +26,10 @@ jobs:
 
     - name: Instalar repo tool
       run: |
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
-        sudo chmod +x /usr/local/bin/repo
+        mkdir -p ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        echo "$HOME/bin" >> $GITHUB_PATH
 
     - name: Inicializar repo crDroid Android 15
       run: |
