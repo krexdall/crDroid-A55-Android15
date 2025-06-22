@@ -8,44 +8,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Set up job
+        uses: actions/checkout@v4
 
-    - name: Preparar ambiente
-      run: |
-        sudo dpkg --add-architecture i386
-        sudo apt update
-        sudo apt install -y git-core gnupg flex bison build-essential \
-          zip curl zlib1g-dev libc6-dev libstdc++6 \
-          lib32z1-dev liblz4-tool libxml2-utils rsync \
-          python3 python-is-python3 openjdk-17-jdk \
-          unzip squashfs-tools xsltproc zstd
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Instalar repo tool
-      run: |
-        mkdir -p ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-        chmod a+x ~/bin/repo
-        echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Preparar ambiente
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y \
+            bc bison build-essential curl flex git gnupg gperf libncurses5-dev \
+            libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool \
+            squashfs-tools xsltproc zip zlib1g-dev \
+            liblz4-tool lib32z1 lib32ncurses-dev lib32readline-dev lib32z1-dev \
+            liblz4-tool libncurses-dev libncurses5 libncurses5:i386 libstdc++6:i386 \
+            libc6:i386 lib32ncurses6 lib32ncurses-dev lib32z1-dev libssl-dev \
+            gcc g++ python-is-python3 libtinfo5 libncursesw5 curl wget \
+            unzip openjdk-17-jdk-headless
 
-    - name: Inicializar repo crDroid Android 15
-      run: |
-        mkdir -p ~/crdroid
-        cd ~/crdroid
-        repo init -u https://github.com/crdroidandroid/android.git -b 15.0 --depth=1
+      - name: Instalar repo tool
+        run: |
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+rx ~/bin/repo
+          echo "$HOME/bin" >> $GITHUB_PATH
 
-    - name: Sincronizar repositório (repo sync)
-      run: |
-        cd ~/crdroid
-        repo sync -c -j2 --no-tags --no-clone-bundle
+      - name: Inicializar repo crDroid Android 15
+        run: |
+          mkdir -p ~/crdroid
+          cd ~/crdroid
+          repo init -u https://github.com/TrebleDroid/manifest -b 15 --depth=1 --no-tags --no-clone-bundle
 
-    - name: Compactar repositório sincronizado
-      run: |
-        cd ~
-        tar --zstd -cf repo.tar.zst crdroid
+      - name: Sincronizar repositório (repo sync)
+        run: |
+          cd ~/crdroid
+          export REPO_TRACE=1
+          export REPO_DEBUG=1
+          repo sync -c -j2 --no-tags --no-clone-bundle | tee repo_sync.log
 
-    - name: Fazer upload do .repo.tar.zst
-      uses: actions/upload-artifact@v4
-      with:
-        name: crdroid-repo-backup
-        path: ~/repo.tar.zst
+      - name: Upload do log repo_sync.log se falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-sync-log
+          path: ~/crdroid/repo_sync.log
+
+      - name: Compactar repositório sincronizado
+        if: success()
+        run: |
+          cd ~
+          tar -I 'zstd -19' -cf repo.tar.zst crdroid
+
+      - name: Fazer upload do .repo.tar.zst
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-crdroid
+          path: ~/repo.tar.zst
