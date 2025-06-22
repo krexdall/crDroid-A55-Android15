@@ -5,11 +5,12 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    name: build
 
     steps:
       - name: Set up job
-        run: echo "Iniciando build crDroid para Galaxy A55"
+        run: echo "Iniciando job de build"
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,41 +25,40 @@ jobs:
             libxml2 libxml2-utils xsltproc unzip fontconfig \
             openjdk-17-jdk openjdk-17-jdk-headless \
             libc6-i386 lib32ncurses-dev lib32z1 \
-            liblz4-tool libtinfo5
+            liblz4-tool libtinfo6
 
       - name: Instalar repo tool
         run: |
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+rx ~/bin/repo
-          echo "$HOME/bin" >> $GITHUB_PATH
 
       - name: Inicializar repo crDroid Android 15
+        env:
+          GIT_CONFIG_NOSYSTEM: 1
         run: |
           mkdir -p ~/crdroid
           cd ~/crdroid
-          git clone --depth=1 https://github.com/TrebleDroid/manifest.git .repo/manifests
-          repo init -u https://github.com/TrebleDroid/manifest.git -b 15 --depth=1
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          repo init -u https://github.com/TrebleDroid/manifest.git -b td-android-15.0 --depth=1
 
       - name: Sincronizar repositório (repo sync)
         run: |
           cd ~/crdroid
-          repo sync -c -j2 --no-tags --no-clone-bundle | tee repo_sync.log
-
-      - name: Upload do log repo_sync.log se falhar
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: repo_sync_log
-          path: ~/crdroid/repo_sync.log
+          repo sync -c -j2 --no-tags --no-clone-bundle
 
       - name: Compactar repositório sincronizado
         run: |
           cd ~
-          tar -I zstd -cf repo.tar.zst crdroid
+          tar -I 'zstd -19' -cf repo.tar.zst crdroid
 
       - name: Fazer upload do .repo.tar.zst
         uses: actions/upload-artifact@v4
         with:
-          name: crdroid_repo_sync
+          name: repo-crdroid-td15
           path: ~/repo.tar.zst
+
+      - name: Post Checkout
+        run: |
+          echo "Job finalizado"
