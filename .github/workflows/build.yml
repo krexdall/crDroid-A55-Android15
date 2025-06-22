@@ -22,11 +22,11 @@ jobs:
         sudo apt install -y repo
 
     - name: Init repo
-      run: |
-        mkdir -p ~/crdroid
-        cd ~/crdroid
-        repo init -u https://github.com/crdroidandroid/android.git -b 15.0
-        repo sync -c --no-tags --no-clone-bundle --force-sync --optimized-fetch --prune -j4
+  run: |
+    mkdir -p ~/crdroid
+    cd ~/crdroid
+    repo init -u https://github.com/crdroidandroid/android.git -b 15.0
+    repo sync -c -j2 --no-tags --no-clone-bundle --force-sync --optimized-fetch --prune
 
     - name: Clonar device, vendor, kernel sources
       run: |
