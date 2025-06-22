@@ -1,55 +1,50 @@
 name: Construir crDroid Android 15
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+jobs: build: runs-on: ubuntu-latest
 
-    steps:
-    - name: Preparar ambiente
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          bc bison build-essential curl flex git gnupg gperf libxml2-utils \
-          lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
-          libncurses5 libncurses5-dev libssl-dev \
-          libtinfo-dev liblz4-tool libncursesw5-dev \
-          openjdk-17-jdk-headless
+steps:
+  - name: Preparar ambiente
+    run: |
+      sudo apt update
+      sudo apt install -y \
+        bc bison build-essential curl flex git gnupg gperf libxml2-utils \
+        lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
+        libncurses-dev libssl-dev liblz4-tool \
+        openjdk-17-jdk-headless
 
-    - name: Instalar ferramenta de repositório
-      run: |
-        mkdir -p ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
-        chmod a+x ~/bin/repo
-        echo "$HOME/bin" >> $GITHUB_PATH
+  - name: Instalar ferramenta de repositório
+    run: |
+      mkdir -p ~/bin
+      curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+      chmod a+x ~/bin/repo
 
-    - name: Inicializar repositório crDroid Android 15
-      run: |
-        mkdir -p ~/crdroid
-        cd ~/crdroid
-        repo init -u https://github.com/TrebleDroid/manifest.git -b 15 --depth=1
+  - name: Inicializar repositório crDroid Android 15
+    run: |
+      mkdir -p ~/crdroid
+      cd ~/crdroid
+      ~/bin/repo init -u https://github.com/TrebleDroid/manifest.git -b android-15.0 --depth=1
 
-    - name: Sincronizar repositório (repo sync)
-      run: |
-        cd ~/crdroid
-        repo sync -c --no-tags --no-clone-bundle -j4 || cp .repo/repo/repo_sync.log $HOME/repo_sync.log
+  - name: Sincronizar repositório (repo sync)
+    run: |
+      cd ~/crdroid
+      ~/bin/repo sync -c --force-sync --no-tags --no-clone-bundle -j$(nproc --all)
 
-    - name: Upload do log repo_sync.log se falhar
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: repo_sync.log
-        path: ~/repo_sync.log
+  - name: Compactar repositório sincronizado
+    run: |
+      cd ~
+      tar -I zstd -cf repo.tar.zst crdroid
 
-    - name: Compactar repositório sincronizado
-      run: |
-        cd ~
-        tar --zstd -cf repo.tar.zst crdroid
+  - name: Fazer upload do .repo.tar.zst
+    uses: actions/upload-artifact@v4
+    with:
+      name: repo-synced
+      path: ~/repo.tar.zst
 
-    - name: Fazer upload do .repo.tar.zst
-      uses: actions/upload-artifact@v4
-      with:
-        name: repo.tar.zst
-        path: ~/repo.tar.zst
+  - name: Pós-checkout
+    run: |
+      git version
+      git config --global --add safe.directory $(pwd)
+      git config --global --unset-all http.https://github.com/.extraheader || true
+
