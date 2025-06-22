@@ -5,33 +5,35 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Instalar dependências básicas
+    - name: Preparar ambiente
       run: |
         sudo dpkg --add-architecture i386
         sudo apt update
-        sudo apt install -y \
-          bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
-          git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev \
-          lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libncurses5-dev:i386 \
-          libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush \
-          rsync schedtool squashfs-tools xsltproc zip zlib1g-dev unzip
+        sudo apt install -y git-core gnupg flex bison build-essential \
+          zip curl zlib1g-dev:i386 libc6-dev:i386 libncurses5:i386 \
+          libstdc++6:i386 lib32z1-dev libbz2-1.0:i386 libssl-dev \
+          liblz4-tool libxml2-utils rsync ca-certificates \
+          python3 python-is-python3 openjdk-17-jdk bc \
+          libncurses5-dev:i386 libncurses-dev:i386 \
+          lib32ncurses6 lib32z1 libgl1-mesa-dev unzip \
+          squashfs-tools xsltproc zip zstd
 
     - name: Instalar repo tool
       run: |
-        sudo curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/bin/repo
-        sudo chmod a+rx /usr/bin/repo
+        sudo curl https://storage.googleapis.com/git-repo-downloads/repo -o /usr/local/bin/repo
+        sudo chmod +x /usr/local/bin/repo
 
     - name: Inicializar repo crDroid Android 15
       run: |
         mkdir -p ~/crdroid
         cd ~/crdroid
-        repo init -u https://github.com/TrebleDroid/treble_manifest.git -b android-15 --depth=1
+        repo init -u https://github.com/crdroidandroid/android.git -b 15.0 --depth=1
 
     - name: Sincronizar repositório (repo sync)
       run: |
@@ -41,10 +43,10 @@ jobs:
     - name: Compactar repositório sincronizado
       run: |
         cd ~
-        tar -I 'zstd -T0' -cf repo.tar.zst crdroid/.repo
+        tar --zstd -cf repo.tar.zst crdroid
 
     - name: Fazer upload do .repo.tar.zst
       uses: actions/upload-artifact@v4
       with:
-        name: repo-cache
+        name: crdroid-repo-backup
         path: ~/repo.tar.zst
