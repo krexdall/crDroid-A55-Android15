@@ -1,0 +1,45 @@
+name: Build crDroid A55 Android 15
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile ROM
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Prepare environment
+      run: |
+        sudo apt update
+        sudo apt install -y repo git openjdk-17-jdk
+
+    - name: Init repo
+      run: |
+        mkdir -p ~/crdroid
+        cd ~/crdroid
+        repo init -u https://github.com/crdroidandroid/android.git -b 15.0 --depth=1
+        repo sync -c --no-tags --no-clone-bundle -j$(nproc --all)
+
+    - name: Clone device, vendor, kernel sources
+      run: |
+        cd ~/crdroid
+        git clone https://github.com/krexdall/device_samsung_a55.git device/samsung/a55
+        git clone https://github.com/krexdall/vendor_samsung_a55.git vendor/samsung/a55
+        git clone https://github.com/krexdall/kernel_samsung_a55.git kernel/samsung/a55
+
+    - name: Build ROM
+      run: |
+        cd ~/crdroid
+        source build/envsetup.sh
+        lunch a55-userdebug
+        mka bacon -j$(nproc --all)
+
+    - name: Upload ROM
+      uses: actions/upload-artifact@v3
+      with:
+        name: crDroid-A55
+        path: ~/crdroid/out/target/product/a55/*.zip
