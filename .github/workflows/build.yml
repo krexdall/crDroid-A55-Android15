@@ -39,7 +39,7 @@ jobs:
         mka bacon -j$(nproc --all)
 
     - name: Upload ROM
-      uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: crDroid-A55
         path: ~/crdroid/out/target/product/a55/*.zip
