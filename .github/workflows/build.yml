@@ -1,7 +1,16 @@
+name: Construir crDroid A55 Android 15
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -9,30 +18,30 @@ jobs:
       run: |
         sudo dpkg --add-architecture i386
         sudo apt update
-        sudo apt install -y \
-          bc bison build-essential curl flex git gnupg gperf \
-          libncurses5 libncurses5:i386 libssl-dev libxml2 libxml2-utils \
-          lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
-          liblz4-tool libncursesw5 lib32ncurses5 lib32z1 lib32stdc++6 \
-          libtinfo5 libtinfo5:i386 openjdk-17-jdk-headless
+        sudo apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib \
+        git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev \
+        liblz4-tool libncurses5 libncurses5:i386 libncurses5-dev libssl-dev libtinfo5 \
+        libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
+        libncurses-dev libncursesw5 libncursesw5:i386 libncursesw5-dev openjdk-17-jdk \
+        python-is-python3 libtinfo5 libtinfo5:i386 libtinfo-dev libncurses-dev:i386
 
     - name: Instalar ferramenta de repositório
       run: |
         mkdir -p ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
-        echo "$HOME/bin" >> $GITHUB_PATH
+        echo 'export PATH=~/bin:$PATH' >> $GITHUB_ENV
 
     - name: Inicializar repositório crDroid Android 15
       run: |
         mkdir -p ~/crdroid
         cd ~/crdroid
-        ~/bin/repo init -u https://github.com/TrebleDroid/manifest.git -b td-aosp-15.0 --depth=1 --no-tags
+        repo init -u https://github.com/TrebleDroid/manifest.git -b 15 --depth=1 --no-tags
 
     - name: Sincronizar repositório (repo sync)
       run: |
         cd ~/crdroid
-        ~/bin/repo sync -c -j2 --no-tags --no-clone-bundle
+        repo sync -c -j2 --no-tags --no-clone-bundle
 
     - name: Compactar repositório sincronizado
       run: |
@@ -42,5 +51,5 @@ jobs:
     - name: Fazer upload do .repo.tar.zst
       uses: actions/upload-artifact@v4
       with:
-        name: repo-crdroid-td15
+        name: crdroid_repo
         path: ~/repo.tar.zst
