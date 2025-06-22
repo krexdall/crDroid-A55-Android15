@@ -1,55 +1,47 @@
-name: Construir crDroid A55 Android 15
+name: Preparar Ambiente crDroid A55
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - name: Preparar ambiente
+    - name: Instalar dependências básicas
       run: |
-        sudo dpkg --add-architecture i386
         sudo apt update
         sudo apt install -y bc bison build-essential curl flex g++-multilib gcc-multilib \
-          git gnupg gperf imagemagick libncurses5-dev libncurses5-dev:i386 \
-          libreadline-dev libssl-dev liblz4-tool libxml2 libxml2-utils lzop \
-          pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
-          openjdk-17-jdk python3 python3-pip repo
+        git gnupg gperf imagemagick libncurses5-dev libncurses5-dev:i386 libreadline-dev \
+        libssl-dev liblz4-tool libxml2 libxml2-utils lzop pngcrush rsync schedtool \
+        squashfs-tools xsltproc zip zlib1g-dev openjdk-17-jdk python3 python3-pip \
+        tar zstd
 
-    - name: Limpar espaço
+    - name: Instalar repo tool
       run: |
-        sudo rm -rf /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/share/dotnet
-        sudo apt clean
-        df -h
+        mkdir -p ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        echo 'export PATH=~/bin:$PATH' >> $GITHUB_ENV
 
-    - name: Init repo
+    - name: Inicializar repo crDroid Android 15
       run: |
-        mkdir -p $GITHUB_WORKSPACE/crdroid
-        cd $GITHUB_WORKSPACE/crdroid
-        repo init -u https://github.com/crdroidandroid/android.git -b 15.0
-        repo sync -c -j2 --no-tags --no-clone-bundle --optimized-fetch --prune
+        mkdir -p ~/crdroid
+        cd ~/crdroid
+        ~/bin/repo init -u https://github.com/crdroidandroid/android.git -b 15.0
 
-    - name: Clonar device, vendor, kernel sources
+    - name: Sincronizar repositório (repo sync)
       run: |
-        cd $GITHUB_WORKSPACE/crdroid
-        git clone https://github.com/krexdall/device_samsung_a55 device/samsung/a55
-        git clone https://github.com/krexdall/vendor_samsung_a55 vendor/samsung/a55
-        git clone https://github.com/krexdall/kernel_samsung_a55 kernel/samsung/a55
+        cd ~/crdroid
+        ~/bin/repo sync -c --no-tags --no-clone-bundle --force-sync --optimized-fetch --prune -j4 --depth=1
 
-    - name: Build ROM
+    - name: Compactar repositório sincronizado
       run: |
-        cd $GITHUB_WORKSPACE/crdroid
-        source build/envsetup.sh
-        lunch a55-userdebug
-        mka bacon -j$(nproc --all)
+        cd ~
+        tar --zstd -cf repo.tar.zst crdroid/.repo
 
-    - name: Upload ROM
+    - name: Fazer upload do .repo.tar.zst
       uses: actions/upload-artifact@v4
       with:
-        name: crDroid-A55
-        path: $GITHUB_WORKSPACE/crdroid/out/target/product/*/*.zip
+        name: repo-crdroid-15
+        path: ~/repo.tar.zst
