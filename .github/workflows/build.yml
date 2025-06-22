@@ -33,7 +33,6 @@ jobs:
             fontconfig \
             python-is-python3 \
             libncurses-dev \
-            libncursesw-dev \
             libtinfo-dev
 
       - name: Instalar ferramenta de repositório
