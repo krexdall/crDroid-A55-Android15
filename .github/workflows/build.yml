@@ -28,7 +28,11 @@ jobs:
         run: |
           mkdir -p ~/crdroid
           cd ~/crdroid
-          ~/bin/repo init -u https://github.com/TrebleDroid/treble_manifest.git -b android-15.0 -m manifest.xml --depth=1
+          ~/bin/repo init \
+            -u https://github.com/TrebleDroid/treble_manifest.git \
+            -b android-15.0 \
+            -m manifest.xml \
+            --depth=1
 
       - name: Sincronizar repositório (repo sync)
         run: |
