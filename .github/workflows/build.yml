@@ -29,7 +29,7 @@ jobs:
           mkdir -p ~/crdroid
           cd ~/crdroid
           git config --global url."https://${{ secrets.GH_TOKEN }}@github.com".insteadOf "https://github.com"
-          ~/bin/repo init -u https://github.com/TrebleDroid/treble_manifest.git -b 15 --depth=1
+          ~/bin/repo init -u https://github.com/TrebleDroid/treble_manifest.git -b android-15 --depth=1
 
       - name: Sincronizar repositório (repo sync)
         run: |
