@@ -25,14 +25,10 @@ jobs:
           chmod a+x ~/bin/repo
 
       - name: Inicializar repositório crDroid Android 15
-  run: |
-    mkdir -p ~/crdroid
-    cd ~/crdroid
-    ~/bin/repo init \
-      -u https://github.com/TrebleDroid/treble_manifest.git \
-      -b android-15.0 \
-      -m manifest.xml \
-      --depth=1
+        run: |
+          mkdir -p ~/crdroid
+          cd ~/crdroid
+          ~/bin/repo init -u https://github.com/TrebleDroid/treble_manifest.git -b android-15.0 -m manifest.xml --depth=1
 
       - name: Sincronizar repositório (repo sync)
         run: |
