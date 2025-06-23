@@ -11,11 +11,15 @@ jobs:
       - name: Preparar ambiente
         run: |
           sudo dpkg --add-architecture i386
+          sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' /etc/apt/sources.list
           sudo apt update
-          sudo apt install -y git aria2 python3 unzip zip bc curl gcc clang build-essential \
-            libncurses5 libncurses5-dev libncurses5:i386 libncurses5-dev:i386 \
-            libtinfo5 libtinfo5-dev libtinfo5:i386 libtinfo5-dev:i386 \
-            libssl-dev liblz4-tool libncursesw5:i386 lib32z1 lib32stdc++6
+          sudo apt install -y git aria2 python3 python-is-python3 unzip \
+            openjdk-17-jdk bc bison build-essential curl flex g++-multilib gcc-multilib \
+            gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev \
+            liblz4-tool libncurses5 libncurses5-dev libssl-dev lzop pngcrush \
+            rsync schedtool squashfs-tools xsltproc zip zlib1g-dev \
+            libtinfo5 libtinfo5:i386 libtinfo5-dev libtinfo5-dev:i386 \
+            libncurses5:i386 libncurses5-dev libncurses5-dev:i386
 
       - name: Instalar ferramenta de repositório
         run: |
@@ -32,7 +36,7 @@ jobs:
       - name: Sincronizar repositório (repo sync)
         run: |
           cd ~/crdroid
-          ~/bin/repo sync -c --force-sync --no-tags --no-clone-bundle -j$(nproc) || true
+          ~/bin/repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc --all)
 
       - name: Upload do log repo_sync.log se falhar
         if: failure()
@@ -44,10 +48,10 @@ jobs:
       - name: Compactar repositório sincronizado
         run: |
           cd ~
-          tar --exclude='.repo' -caf repo.tar.zst crdroid
+          tar --exclude='.repo' -cvf repo.tar.zst crdroid
 
       - name: Fazer upload do .repo.tar.zst
         uses: actions/upload-artifact@v4
         with:
-          name: crDroid_Source
+          name: repo_compactado
           path: ~/repo.tar.zst
