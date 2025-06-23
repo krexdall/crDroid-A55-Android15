@@ -28,7 +28,8 @@ jobs:
         run: |
           mkdir -p ~/crdroid
           cd ~/crdroid
-          ~/bin/repo init -u https://github.com/TrebleDroid/manifest.git -b 15 --depth=1
+          git config --global url."https://${{ secrets.GH_TOKEN }}@github.com".insteadOf "https://github.com"
+         ~/bin/repo init -u https://github.com/TrebleDroid/manifest.git -b 15 --depth=1
 
       - name: Sincronizar repositório (repo sync)
         run: |
